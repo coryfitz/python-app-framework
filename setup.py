@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="moderne",
-    version="0.0.1",
+    version="0.0.2",
     author="Cory Fitz",
     author_email="coryalanfitz@gmail.com",
     description="Moderne Web Framework",
