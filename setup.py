@@ -1,22 +1,28 @@
 from setuptools import setup, find_packages
+import tomllib 
+with open('config.toml', 'rb') as f:
+    config = tomllib.load(f)
+FRAMEWORK_NAME = config['framework_name']
+GITHUB_URL = config['github_url']
 
 setup(
-    name="moderne",
+    name=FRAMEWORK_NAME.lower(),
     version="0.0.2",
     author="Cory Fitz",
     author_email="coryalanfitz@gmail.com",
-    description="Moderne Web Framework",
+    description=f"{FRAMEWORK_NAME} Web Framework",
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
-    url="https://github.com/coryfitz/moderne",
-    packages=find_packages(),
+    url=GITHUB_URL,
+    packages=find_packages(include=["moderne", "moderne.*"]),
     include_package_data=True,
     package_data={
-        'moderne.templates': ['*.html', '*.py', '*.png'],
+        'framework.templates': ['*.html', '*.py', '*.png'],
+        FRAMEWORK_NAME.lower(): ['config.toml']
     },
     entry_points={
         'console_scripts': [
-            'moderne = moderne.cli:main',
+            f'{FRAMEWORK_NAME.lower()} = framework.cli:main',
         ],
     },
     classifiers=[

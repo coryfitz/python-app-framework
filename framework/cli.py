@@ -3,9 +3,16 @@ import os
 import shutil
 import subprocess
 import socket
+import tomllib
 import importlib.resources as pkg_resources
 import webbrowser
-import moderne.templates
+import framework.templates
+
+with pkg_resources.open_text("moderne", "config.toml") as f:
+        config = tomllib.load(f)
+        FRAMEWORK_NAME = config['framework_name']
+
+print(FRAMEWORK_NAME)
 
 def is_port_in_use(port):
     """Check if a port is already in use."""
@@ -46,18 +53,18 @@ def create_app_directory(name):
         os.makedirs(directory_path, exist_ok=True)
 
         # Use pkg_resources to copy files from the 'templates' package
-        with pkg_resources.path(moderne.templates, 'settings.py') as master_settings:
+        with pkg_resources.path(framework.templates, 'settings.py') as master_settings:
             new_settings_path = os.path.join(directory_path, 'settings.py')
             shutil.copyfile(master_settings, new_settings_path)
 
         with open(new_settings_path, 'a') as f:
             f.write(f"\n# App-specific settings\nAPP_NAME = '{name}'\n")
 
-        with pkg_resources.path(moderne.templates, 'main.py') as master_main:
+        with pkg_resources.path(framework.templates, 'main.py') as master_main:
             new_main_path = os.path.join(directory_path, 'main.py')
             shutil.copyfile(master_main, new_main_path)
 
-        with pkg_resources.path(moderne.templates, 'app.py') as master_app:
+        with pkg_resources.path(framework.templates, 'app.py') as master_app:
             new_app_path = os.path.join(directory_path, 'app.py')
             shutil.copyfile(master_app, new_app_path)
 
@@ -70,26 +77,26 @@ def create_app_directory(name):
         static_dir = os.path.join(app_dir, 'static')
         os.makedirs(static_dir, exist_ok=True)
 
-        with pkg_resources.path(moderne.templates, 'index.py') as master_index:
+        with pkg_resources.path(framework.templates, 'index.py') as master_index:
             new_index_path = os.path.join(routes_dir, 'index.py')
             shutil.copyfile(master_index, new_index_path)
 
-        with pkg_resources.path(moderne.templates, 'index.html') as master_index_html:
+        with pkg_resources.path(framework.templates, 'index.html') as master_index_html:
             new_index_html_path = os.path.join(static_dir, 'index.html')
             shutil.copyfile(master_index_html, new_index_html_path)
 
-        with pkg_resources.path(moderne.templates, 'moderne.png') as master_logo:
-            new_logo_path = os.path.join(static_dir, 'moderne.png')
+        with pkg_resources.path(framework.templates, 'logo.png') as master_logo:
+            new_logo_path = os.path.join(static_dir, 'logo.png')
             shutil.copyfile(master_logo, new_logo_path)
 
-        print(f"Created a new Moderne app at {directory_path}")
+        print(f"Created a new {FRAMEWORK_NAME} app at {directory_path}")
     except Exception as e:
         print(f"An error occurred while creating the directory: {e}")
 
 def main():
     """CLI entry point."""
     # Create an argument parser
-    parser = argparse.ArgumentParser(description="Moderne App Generator and Runner")
+    parser = argparse.ArgumentParser(description=F"{FRAMEWORK_NAME} App Generator and Runner")
     
     # Add 'new' and 'run' commands
     parser.add_argument("command", help="The command to run (e.g., new or run)")
@@ -104,11 +111,11 @@ def main():
         if args.name:
             create_app_directory(args.name)
         else:
-            print("Please provide a name for the new app. Usage: 'moderne new <name>'")
+            print(f"Please provide a name for the new app. Usage: '{FRAMEWORK_NAME.lower()} new <name>'")
     elif args.command == "run":
         run_uvicorn(port=args.port)
     else:
-        print("Invalid command. Use 'moderne new <name>' to create a new app or 'moderne run' to run the development server.")
+        print(f"Invalid command. Use '{FRAMEWORK_NAME.lower()} new <name>' to create a new app or '{FRAMEWORK_NAME.lower()} run' to run the development server.")
 
 if __name__ == "__main__":
     main()
