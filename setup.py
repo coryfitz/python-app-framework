@@ -5,6 +5,7 @@ with open('config.toml', 'rb') as f:
 FRAMEWORK_NAME = config['framework_name']
 GITHUB_URL = config['github_url']
 
+
 setup(
     name=FRAMEWORK_NAME.lower(),
     version="0.0.2",
