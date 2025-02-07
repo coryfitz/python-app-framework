@@ -1,13 +1,14 @@
 from setuptools import setup, find_packages
 import tomllib 
-with open('config.toml', 'rb') as f:
+with open('framework/config.toml', 'rb') as f:
     config = tomllib.load(f)
 FRAMEWORK_NAME = config['framework_name']
 GITHUB_URL = config['github_url']
 
+module_name = FRAMEWORK_NAME.lower()
 
 setup(
-    name=FRAMEWORK_NAME.lower(),
+    name=module_name,
     version="0.0.2",
     author="Cory Fitz",
     author_email="coryalanfitz@gmail.com",
@@ -15,15 +16,16 @@ setup(
     long_description=open('README.md').read(),
     long_description_content_type="text/markdown",
     url=GITHUB_URL,
-    packages=find_packages(include=["moderne", "moderne.*"]),
+    package_dir={module_name: "framework"},
+    packages=[module_name] + [f"{module_name}.{pkg}" for pkg in find_packages("framework")],
     include_package_data=True,
     package_data={
-        'framework.templates': ['*.html', '*.py', '*.png'],
-        FRAMEWORK_NAME.lower(): ['config.toml']
+        f'{module_name}.templates': ['*.html', '*.py', '*.png'],
+        module_name: ['config.toml']
     },
     entry_points={
         'console_scripts': [
-            f'{FRAMEWORK_NAME.lower()} = framework.cli:main',
+            f'{module_name} = {module_name}.cli:main',
         ],
     },
     classifiers=[
