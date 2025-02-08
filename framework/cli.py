@@ -9,11 +9,8 @@ import importlib.resources as pkg_resources
 import webbrowser
 
 script_dir = os.path.dirname(os.path.abspath(__file__))
-
-# ✅ Find `config.toml` in the same directory
 config_path = os.path.join(script_dir, "config.toml")
 
-# ✅ Open and parse the config file
 with open(config_path, "rb") as f:  # "rb" required for tomllib
     config = tomllib.load(f)
     FRAMEWORK_NAME = config['framework_name']
@@ -51,54 +48,56 @@ def run_uvicorn(port=8000):
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running Uvicorn: {e}")
 
-
 def create_app_directory(name):
     directory_path = os.path.join(os.getcwd(), name)
 
-    try:
-        os.makedirs(directory_path, exist_ok=True)
+    if os.path.exists(directory_path):
+        print('app name already exists at this directory')
+    else:
+        try:
+            os.makedirs(directory_path, exist_ok=True)
 
-        TEMPLATES_MODULE = importlib.import_module(f"{MODULE_NAME}.templates")
+            TEMPLATES_MODULE = importlib.import_module(f"{MODULE_NAME}.templates")
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'settings.py') as master_settings:
-            new_settings_path = os.path.join(directory_path, 'settings.py')
-            shutil.copyfile(master_settings, new_settings_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'settings.py') as master_settings:
+                new_settings_path = os.path.join(directory_path, 'settings.py')
+                shutil.copyfile(master_settings, new_settings_path)
 
-        with open(new_settings_path, 'a') as f:
-            f.write(f"\n# App-specific settings\nAPP_NAME = '{name}'\n")
+            with open(new_settings_path, 'a') as f:
+                f.write(f"\n# App-specific settings\nAPP_NAME = '{name}'\n")
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'main.py') as master_main:
-            new_main_path = os.path.join(directory_path, 'main.py')
-            shutil.copyfile(master_main, new_main_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'main.py') as master_main:
+                new_main_path = os.path.join(directory_path, 'main.py')
+                shutil.copyfile(master_main, new_main_path)
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'app.py') as master_app:
-            new_app_path = os.path.join(directory_path, 'app.py')
-            shutil.copyfile(master_app, new_app_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'app.py') as master_app:
+                new_app_path = os.path.join(directory_path, 'app.py')
+                shutil.copyfile(master_app, new_app_path)
 
-        app_dir = os.path.join(directory_path, 'app')
-        os.makedirs(app_dir, exist_ok=True)
+            app_dir = os.path.join(directory_path, 'app')
+            os.makedirs(app_dir, exist_ok=True)
 
-        routes_dir = os.path.join(app_dir, 'routes')
-        os.makedirs(routes_dir, exist_ok=True)
+            routes_dir = os.path.join(app_dir, 'routes')
+            os.makedirs(routes_dir, exist_ok=True)
 
-        static_dir = os.path.join(app_dir, 'static')
-        os.makedirs(static_dir, exist_ok=True)
+            static_dir = os.path.join(app_dir, 'static')
+            os.makedirs(static_dir, exist_ok=True)
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'index.py') as master_index:
-            new_index_path = os.path.join(routes_dir, 'index.py')
-            shutil.copyfile(master_index, new_index_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'index.py') as master_index:
+                new_index_path = os.path.join(routes_dir, 'index.py')
+                shutil.copyfile(master_index, new_index_path)
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'index.html') as master_index_html:
-            new_index_html_path = os.path.join(static_dir, 'index.html')
-            shutil.copyfile(master_index_html, new_index_html_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'index.html') as master_index_html:
+                new_index_html_path = os.path.join(static_dir, 'index.html')
+                shutil.copyfile(master_index_html, new_index_html_path)
 
-        with pkg_resources.path(TEMPLATES_MODULE, 'logo.png') as master_logo:
-            new_logo_path = os.path.join(static_dir, 'logo.png')
-            shutil.copyfile(master_logo, new_logo_path)
+            with pkg_resources.path(TEMPLATES_MODULE, 'logo.png') as master_logo:
+                new_logo_path = os.path.join(static_dir, 'logo.png')
+                shutil.copyfile(master_logo, new_logo_path)
 
-        print(f"Created a new {FRAMEWORK_NAME} app at {directory_path}")
-    except Exception as e:
-        print(f"An error occurred while creating the directory: {e}")
+            print(f"Created a new {FRAMEWORK_NAME} app at {directory_path}")
+        except Exception as e:
+            print(f"An error occurred while creating the directory: {e}")
 
 def main():
     """CLI entry point."""
