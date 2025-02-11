@@ -1,7 +1,8 @@
 import socket
 import pytest
+import subprocess
 from .. import cli
-from ..cli import is_port_in_use, find_next_available_port
+from ..cli import is_port_in_use, find_next_available_port, run_uvicorn
 
 def test_is_port_in_use():
     """Test if is_port_in_use correctly detects an open/closed port."""
@@ -50,4 +51,96 @@ def occupied_port():
 def test_find_next_available_port_real_socket(occupied_port):
     """Test find_next_available_port using an actually occupied port."""
     next_port = find_next_available_port(occupied_port)
-    assert next_port > occupied_port  # Ensure we get a higher port
+    assert next_port > occupied_port
+
+def test_run_uvicorn_port_available(monkeypatch):
+    """Test when the default port is available."""
+
+    def mock_is_port_in_use(port):
+        return False
+
+    def mock_popen(cmd):
+        return None  # Simulating successful process start
+
+    def mock_webbrowser_open(url):
+        return None
+
+    monkeypatch.setattr("framework.cli.is_port_in_use", mock_is_port_in_use)
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+    monkeypatch.setattr("webbrowser.open", mock_webbrowser_open)
+
+    run_uvicorn(port=8000)
+
+def test_run_uvicorn_port_in_use_user_accepts_new_port(monkeypatch):
+    """Test when the default port is in use and the user agrees to use the next available port."""
+
+    def mock_is_port_in_use(port):
+        return True
+
+    def mock_find_next_available_port(port):
+        return 8001
+
+    def mock_input(prompt):
+        return "y"
+
+    def mock_popen(cmd):
+        return None
+
+    def mock_webbrowser_open(url):
+        return None
+
+    monkeypatch.setattr("framework.cli.is_port_in_use", mock_is_port_in_use)
+    monkeypatch.setattr("framework.cli.find_next_available_port", mock_find_next_available_port)
+    monkeypatch.setattr("builtins.input", mock_input)
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+    monkeypatch.setattr("webbrowser.open", mock_webbrowser_open)
+
+    run_uvicorn(port=8000)
+
+def test_run_uvicorn_port_in_use_user_declines(monkeypatch):
+    """Test when the default port is in use and the user refuses to use the next available port."""
+
+    def mock_is_port_in_use(port):
+        return True
+
+    def mock_input(prompt):
+        return "n"
+
+    popen_called = False
+    browser_called = False
+
+    def mock_popen(cmd):
+        nonlocal popen_called
+        popen_called = True  # Track if this was called
+
+    def mock_webbrowser_open(url):
+        nonlocal browser_called
+        browser_called = True  # Track if browser was called
+
+    monkeypatch.setattr("framework.cli.is_port_in_use", mock_is_port_in_use)
+    monkeypatch.setattr("builtins.input", mock_input)
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+    monkeypatch.setattr("webbrowser.open", mock_webbrowser_open)
+
+    run_uvicorn(port=8000)
+
+    assert not popen_called, "Uvicorn should not start when the user declines to use another port."
+    assert not browser_called, "Browser should not open when the user declines."
+
+def test_run_uvicorn_popen_error(monkeypatch):
+    """Test if `subprocess.Popen` raises an error."""
+
+    def mock_is_port_in_use(port):
+        return False
+
+    def mock_popen(cmd):
+        raise subprocess.CalledProcessError(1, "uvicorn")
+
+    def mock_webbrowser_open(url):
+        pytest.fail("Browser should not open")
+
+    monkeypatch.setattr("framework.cli.is_port_in_use", mock_is_port_in_use)
+    monkeypatch.setattr("subprocess.Popen", mock_popen)
+    monkeypatch.setattr("webbrowser.open", mock_webbrowser_open)
+
+    run_uvicorn(port=8000)

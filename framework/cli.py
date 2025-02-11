@@ -38,7 +38,11 @@ def run_uvicorn(port=8000):
             if response == 'y':
                 port = find_next_available_port(port + 1)
                 print(f"Using port {port} instead.")
+            else:
+                print("User declined to use another port. Exiting.")
+                return  # Exit early, preventing further execution
 
+        print(f"Starting Uvicorn on port {port}...")
         subprocess.Popen(["uvicorn", "app:app", "--reload", "--port", str(port)])
         
         url = f"http://localhost:{port}"
@@ -47,6 +51,7 @@ def run_uvicorn(port=8000):
 
     except subprocess.CalledProcessError as e:
         print(f"An error occurred while running Uvicorn: {e}")
+
 
 def create_app_directory(name):
     directory_path = os.path.join(os.getcwd(), name)
