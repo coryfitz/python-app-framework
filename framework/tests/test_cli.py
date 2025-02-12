@@ -2,12 +2,13 @@ import socket
 import pytest
 import subprocess
 import os
+import sys
 import shutil
 import importlib
 import importlib.resources
 from pathlib import Path
 from .. import cli
-from ..cli import is_port_in_use, find_next_available_port, run_uvicorn, create_app_directory
+from ..cli import is_port_in_use, find_next_available_port, run_uvicorn, create_app_directory, main
 
 def test_is_port_in_use():
     """Test if is_port_in_use correctly detects an open/closed port."""
@@ -197,3 +198,63 @@ def test_create_app_directory_success(monkeypatch, tmp_path):
     assert (test_dir / "app").exists(), "app subdirectory should be created"
     assert (test_dir / "app" / "routes").exists(), "routes subdirectory should be created"
     assert (test_dir / "app" / "static").exists(), "static subdirectory should be created"
+
+def test_main_new_command_with_name(monkeypatch, capsys):
+    """Test `main()` with 'new' command and a valid app name."""
+    
+    def mock_create_app_directory(name):
+        print(f"App '{name}' created")  # Simulate expected output
+    
+    monkeypatch.setattr("framework.cli.create_app_directory", mock_create_app_directory)
+    monkeypatch.setattr(sys, "argv", ["cli.py", "new", "myapp"])
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "App 'myapp' created" in captured.out
+
+def test_main_new_command_without_name(monkeypatch, capsys):
+    """Test `main()` with 'new' command but no app name provided."""
+    monkeypatch.setattr(sys, "argv", ["cli.py", "new"])
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "Please provide a name for the new app" in captured.out
+
+def test_main_run_command_default_port(monkeypatch, capsys):
+    """Test `main()` with 'run' command using the default port."""
+
+    def mock_run_uvicorn(port):
+        print(f"Server running on port {port}")  # Simulate expected output
+    
+    monkeypatch.setattr("framework.cli.run_uvicorn", mock_run_uvicorn)
+    monkeypatch.setattr(sys, "argv", ["cli.py", "run"])
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "Server running on port 8000" in captured.out
+
+def test_main_run_command_custom_port(monkeypatch, capsys):
+    """Test `main()` with 'run' command using a custom port."""
+
+    def mock_run_uvicorn(port):
+        print(f"Server running on port {port}")  # Simulate expected output
+    
+    monkeypatch.setattr("framework.cli.run_uvicorn", mock_run_uvicorn)
+    monkeypatch.setattr(sys, "argv", ["cli.py", "run", "--port", "5000"])
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "Server running on port 5000" in captured.out
+
+def test_main_invalid_command(monkeypatch, capsys):
+    """Test `main()` with an invalid command."""
+    monkeypatch.setattr(sys, "argv", ["cli.py", "invalid"])
+
+    main()
+
+    captured = capsys.readouterr()
+    assert "Invalid command" in captured.out
